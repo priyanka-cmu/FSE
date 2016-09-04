@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+  <head>
+    <title>FSE Chat Room</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial;background-color: lightblue}
+      #chatform { padding: 3px; position: fixed; bottom: 0; width: 30%;text-align: center}
+      #m { border: 0; padding: 10px; margin-left: 20px;background:lightblue;width:90%;}
+      #send { width: 20%; background: rgb(130, 224, 255); border: none; padding: 10px;margin-top: 10px;}
+      #messages { list-style-type: none; padding: 0; }
+      #messages li { padding: 5px 10px;
+        margin-left:20px;
+        margin-right:20px;
+        margin-bottom:5px;
+        background: #eee;
+      }
+      #chat{
+        display :none;
+      }
+      #nameError{
+        display :none;
+      }
+      #enter{
+         background: rgb(130, 224, 255);
+         margin-left:5px;
+         text-align: center;
+      }
+      #user{
+        margin-left: 20px;
+        text-align: center;
+      }
+      #wrapper{
+        width:30%;
+        height:90%
+        border: solid black 2px;
+      }
+      #username{
+        text-align: center;
+      }
+
+    </style>
+  </head>
+  <body>
+      <div id="username" >
+          <h4 style="margin:20px; text-align:center"> Welcome to FSE ChatRoom</h4>
+          <p style="text-align:center"> Enter your username: </p>
+          <p id="nameError" style="color:red; text-align:center"> Username Exists.Pls enter different username !! </p>
+         <form style="margin-bottom:20px">
+              <input id="user" autocomplete="off"/>
+              <button id="enter" type="submit">Enter</button>
+          </form>
+        </div>
+  <div id="wrapper">
+      <div id="chat">
+        <h3 style="color:blue; margin-left:20px; margin-bottom:10px">FSE Chat Room</h3>
+        <ul id="messages"></ul>
+        <form action="" id="chatform" >
+          <input id="m" autocomplete="off"/>
+          <button id="send">Send</button>
+        </form>
+      </div>
+    </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+  <script>
+    var socket = io();
+    $('form').submit(function(){
+      socket.emit('chat message', $('#m').val());
+      $('#m').val('');
+      return false;
+    });
+
+    $('#enter').on('click', function(){
+    //  $('#chat').show();
+      //$('#username').hide();
+      socket.emit('usernames', $('#user').val(), function(data){
+        if(data){
+          $('#chat').show();
+          $('#username').hide();
+          $('body').css({"background-color":"#FFFFFF"});
+        }else{
+          $('#nameError').show();
+        }
+      });
+      $('#user').val('');
+      return false;
+    });
+
+    socket.on('load old messages',function(docs){
+      for(var i=docs.length-1;i>=0;i--){
+        displayMsg(docs[i]);
+      }
+    });
+    var sp = "&nbsp;";
+    for(var i=0; i<23;i++){
+      sp += "&nbsp;";
+    }
+
+    function displayMsg(msg){
+      var tm = msg.ctime.replace(/T/, ' ').replace(/\..+/, '');
+      tm +=" P.M";
+      $('#messages').append($('<li>').html('<b>' + msg.username +'</b>' + sp + tm +'<br/><br/>'+ msg.message ));
+    }
+
+    socket.on('chat message', function(msg){
+   $('#messages').append($('<li>').html('<b>' + msg.username +'</b>' + sp + msg.ctime +'<br/><br/>'+ msg.message));
+   });
+  </script>
+  </body>
+</html>
